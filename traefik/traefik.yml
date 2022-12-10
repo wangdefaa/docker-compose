@@ -1,0 +1,102 @@
+############################ 全局配置 ############################
+global:
+  # 检查新版本
+  checkNewVersion: true
+  # 发送匿名使用数据
+  sendAnonymousUsage: false
+
+############################ 动态配置 ############################
+providers:
+  docker:
+    # docker使用的网络
+    network: proxy
+    # 是否公开容器
+    exposedbydefault: false
+
+############################ 入口配置 ############################
+entryPoints:
+  # 入口点-web
+  web:
+    # 监听端口
+    address: :80
+    http:
+      redirections:
+        entryPoint:
+          # 重定向目标入口点
+          to: websecure
+          # 重定向目标方案
+          scheme: https
+          # 是否永久重定向
+          permanent: true
+          # 优先级
+          # priority: 10
+  
+  # 入口点-websecure
+  websecure:
+    # 监听端口
+    address: :443
+
+############################ 系统日志 ############################
+log:
+  # 日志等级
+  level: INFO
+  # 日志文件
+  filePath: /log/traefik.log.json
+  # 日志格式
+  format: json
+
+############################ 使用日志 ############################
+accessLog:
+  # 日志文件
+  filePath: /log/access.log.json
+  # 日志格式
+  format: json
+
+############################ API、面板 ############################
+api:
+  # 是否启用不安全的访问
+  insecure: false
+  # 是否启用DEBUG
+  debug: true
+  # 是否启用面板
+  dashboard: true
+
+############################ 证书配置 ############################
+certificatesResolvers:
+  # 证书解析-cf
+  cf:
+    acme:
+      # 邮件地址
+      email: your_email
+      # 证书储存位置
+      storage: /etc/acme/acme.json
+      dnsChallenge:
+        # DNS 提供商
+        provider: cloudflare
+  # 证书解析-tx
+  tx:
+    acme:
+      # 邮件地址
+      email: your_email
+      # 证书储存位置
+      storage: /etc/acme/acme.json
+      dnsChallenge:
+        # DNS 提供商
+        provider: tencentcloud
+
+############################ 指标配置 ############################
+# metrics:
+#   prometheus:
+#     buckets:
+#       - 0.1
+#       - 0.3
+#       - 1.2
+#       - 5.0
+#     # 入口处增加metrics标签
+#     addEntryPointsLabels: true
+#     # 在service中启用metrics
+#     addServicesLabels: true
+#     # 不使用默认路由
+#     manualRouting: false
+#     # 指定metrics的端点(默认是管理端口8080/metrics)
+#     # entryPoint: websecure

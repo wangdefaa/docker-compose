@@ -1,0 +1,76 @@
+version: '3.8'
+
+networks:
+  # traefik 使用的网络
+  # docker network create proxy 创建
+  proxy:
+    external: true
+
+services:
+  traefik:
+    # 镜像
+    image: traefik:latest
+    # 容器名称
+    container_name: traefik
+    # 重启策略
+    restart: always
+    # 配置文件
+    env_file:
+      # dnsPod 环境变量
+      - ./dnspod.env
+      # cloudflare 环境变量
+      - ./cloudflare.env
+    # 网络
+    networks:
+      - proxy
+    # 端口
+    ports:
+      # HTTP 端口
+      - 80:80
+      # HTTPS 端口
+      - 443:443
+    # 数据卷
+    volumes:
+      # docker 套接字
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # 配置
+      - ./traefik.yml:/etc/traefik/traefik.yml
+      # 日志
+      - ./log:/log
+      # 证书目录
+      - ./acme:/etc/acme
+    labels:
+      - traefik.enable=true
+
+      ############################ 路由配置 ############################
+      ## 面板路由
+      # 是否开启TLS
+      - traefik.http.routers.dashboard.tls=true
+      # 路由规则
+      - traefik.http.routers.dashboard.rule=Host(`traefik.yourdomain.com`)
+      # 使用的证书解析
+      - traefik.http.routers.dashboard.tls.certresolver=cf
+      # 路由入口点
+      - traefik.http.routers.dashboard.entrypoints=web, websecure
+      # 路由转发的服务
+      - traefik.http.routers.dashboard.service=api@internal
+      # 路由使用的中间件
+      - traefik.http.routers.dashboard.middlewares=dashboard
+      # 基础认证中间件（密码123，htpasswd）
+      - traefik.http.middlewares.dashboard.basicauth.users=admin:$$apr1$TyU0Zxl9$SpYnE9O5.9sVcPA4MjkoL/
+
+      # ## 指标路由
+      # # 是否开启TLS
+      # - traefik.http.routers.metrics.tls=true
+      # # 路由规则
+      # - traefik.http.routers.metrics.rule=Host(`metrics.yourdomain.com`)
+      # # 使用的证书解析
+      # - traefik.http.routers.metrics.tls.certresolver=cf
+      # # 路由入口点
+      # - traefik.http.routers.metrics.entrypoints=web, websecure
+      # # 路由转发的服务
+      # - traefik.http.routers.metrics.service=prometheus@internal
+      # # 路由使用的中间件
+      # - traefik.http.routers.metrics.middlewares=metrics
+      # # 基础认证中间件（密码123，htpasswd）
+      # - traefik.http.middlewares.metrics.basicauth.users=admin:$$apr1$TyU0Zxl9$SpYnE9O5.9sVcPA4MjkoL/

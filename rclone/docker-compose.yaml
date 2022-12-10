@@ -1,0 +1,32 @@
+version: "3.8"
+
+networks:
+  # traefik 所在的网络
+  proxy:
+    external: true
+
+services:
+  rclone:
+    container_name: reclone
+    image: rclone/rclone
+    restart: unless-stopped
+    # 特权模式
+    privileged: true
+    networks:
+      - proxy
+    ports:
+      - 9003:9003
+    volumes:
+      - rclone-config-dir:/config/rclone
+      - rclone-data-dir:/data:shared
+    # 开启 rclone 的 webui
+    command: rcd --rc-web-gui --rc-web-gui-no-open-browser --rc-serve --rc-addr :9003 --rc-user rclone --rc-pass your-password
+    user: 0:0
+    # traefik 配置
+    # labels:
+    #   - traefik.enable=true
+    #   - traefik.http.routers.rclone.service=rclone
+    #   - traefik.http.routers.rclone.rule=Host(`yourdomain.com`)
+    #   - traefik.http.routers.rclone.entrypoints=web, websecure
+    #   - traefik.http.routers.rclone.tls.certresolver=your-resolver
+    #   - traefik.http.services.rclone.loadbalancer.server.port=9003

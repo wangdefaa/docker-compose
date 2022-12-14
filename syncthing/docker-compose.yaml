@@ -1,0 +1,30 @@
+version: '3'
+
+networks:
+  proxy:
+    external: true
+
+services:
+  syncthing:
+    image: syncthing/syncthing
+    container_name: syncthing
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Shanghai
+    volumes:
+      - your_sync_dir:/var/syncthing
+    networks:
+      - proxy
+    ports:
+      - 22000:22000/tcp # TCP file transfers
+      - 22000:22000/udp # QUIC file transfers
+      - 21027:21027/udp # Receive local discovery broadcasts
+    restart: unless-stopped
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.syncthing.service=syncthing
+      - traefik.http.routers.syncthing.rule=Host(`sync.yourdomain.com`)
+      - traefik.http.routers.syncthing.entrypoints=web, websecure
+      - traefik.http.routers.syncthing.tls.certresolver=yourresolver
+      - traefik.http.services.syncthing.loadbalancer.server.url=8384
